@@ -41,10 +41,6 @@ Route::post('/queue/get', [QueueTicketUserController::class, 'store'])->name('qu
 
 Route::prefix('operator/{counter}')->group(function () {
     Route::get('/', [CounterOperatorController::class, 'show'])->name('operator.show');
-    Route::post('/call', [CounterOperatorController::class, 'call'])->name('operator.call');
-    Route::post('/skip', [CounterOperatorController::class, 'skip'])->name('operator.skip');
-    Route::post('/next', [CounterOperatorController::class, 'next'])->name('operator.next');
-    Route::post('/done', [CounterOperatorController::class, 'done'])->name('operator.done');
 });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');

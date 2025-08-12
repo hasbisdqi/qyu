@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Counter;
+use App\Models\Queue;
 use App\Models\QueueTicket;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,19 +12,14 @@ class CounterOperatorController extends Controller
 {
     public function show(Counter $counter)
     {
-        // Tiket yang sedang dilayani
-        $current = QueueTicket::where('status', 'serving')
-            ->first();
 
-        // Tiket berikutnya
-        $next = QueueTicket::where('status', 'waiting')
-            ->orderBy('created_at', 'asc')
-            ->first();
+        $queues = Queue::with('service')
+            ->whereIn('status', ['waiting', 'serving'])
+            ->orderBy('created_at')
+            ->get();
 
         return Inertia::render('Operator', [
-            'counter' => $counter,
-            'current' => $current,
-            'next' => $next,
+            'queues' => $queues,
         ]);
     }
 

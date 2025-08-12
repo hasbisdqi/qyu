@@ -16,4 +16,9 @@ class Queue extends Model
         'called_at',
         'finished_at'
     ];
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
 }

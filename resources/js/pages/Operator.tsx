@@ -1,100 +1,57 @@
-import { Head, router } from '@inertiajs/react'
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import React from 'react';
+import { Head } from '@inertiajs/react';
+import { Queue } from '@/types';
+import { Card, CardAction, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ConciergeBellIcon, SkipForward, Volume2 } from 'lucide-react';
 
-export default function Operator({
-    counter,
-    current,
-    next,
-}: {
-    counter: { id: number; name: string; type: string }
-    current: any
-    next: any
-}) {
-    const handleQueueAction = async (action: string) => {
-        try {
-            await router.post(
-                route(`operator.${action}`, counter.id),
-                {},
-                {
-                    preserveState: true, // biar nggak reload komponen
-                    preserveScroll: true, // biar nggak loncat scroll
-                    replace: true,        // biar nggak nambah history browser
-                    onSuccess: () => onSuccess?.(`Aksi ${action} berhasil`),
-                    onError: () => onerror?.(`Gagal melakukan aksi ${action}`)
-                }
-            );
-        } catch (error) {
-            console.error(error);
-            onError?.(`Gagal melakukan aksi ${action}`);
-        }
-    };
+export default function Dashboard({ queues }: { queues: Queue[] }) {
     return (
         <>
-            <Head title={`Operator - ${counter.name}`} />
-            <div className="min-h-screen bg-gray-50 p-8">
-                <h1 className="text-2xl font-bold mb-4">{counter.name} - {counter.type}</h1>
-
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Tiket Sedang Dilayani */}
-                    <Card className="col-span-2">
-                        <CardHeader>
-                            <CardTitle>Sedang Dilayani</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {current ? (
-                                <p className="text-6xl font-bold text-blue-600">{current.queue_number}</p>
-                            ) : (
-                                <p className="text-gray-500">Belum ada antrian</p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Tiket Berikutnya */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Berikutnya</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {next ? (
-                                <p className="text-4xl font-bold">{next.queue_number}</p>
-                            ) : (
-                                <p className="text-gray-500">Tidak ada</p>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Tombol Aksi */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Aksi</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <Button
-                                className="w-full"
-                                onClick={() => router.post(route('operator.call', counter.id,))}
-                            >
-                                Panggil / Panggil Ulang
-                            </Button>
-                            <Button
-                                className="w-full"
-                                variant="destructive"
-                                onClick={() => router.post(route('operator.skip', counter.id))}
-                                disabled={!current}
-                            >
-                                Skip
-                            </Button>
-                            <Button
-                                className="w-full"
-                                variant="outline"
-                                onClick={() => router.post(route('operator.next', counter.id))}
-                            >
-                                Next
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
+            <Head title="Operator Dashboard" />
+            <div className="grid grid-cols-3 m-4 gap-4">
+                <Card className='col-span-2'>
+                    <CardHeader>
+                        <CardTitle>Queues</CardTitle>
+                        <CardAction>
+                            <Badge>Serving</Badge>
+                        </CardAction>
+                    </CardHeader>
+                    <CardContent className='flex items-center flex-col justify-center'>
+                        <div className="aspect-square rounded-lg border bg-gradient-to-br from-primary/10 via-transparent to-primary/5 flex items-center justify-center w-fit p-4 mx-auto">
+                            <span className='text-5xl font-bold'>A001</span>
+                        </div>
+                        <span className='pt-3 text-sm text-muted-foreground'>Service</span>
+                        <span className='font-bold'>Payment</span>
+                    </CardContent>
+                    <CardFooter className='flex justify-between gap-3'>
+                        <Button className='flex-1'><Volume2 /> Recall</Button>
+                        <Button className='flex-1 bg-green-600 hover:bg-green-700 text-white'> <ConciergeBellIcon /> Serve</Button>
+                        <Button className='flex-1 bg-red-600 hover:bg-red-700 text-white'> <SkipForward /> Skip</Button>
+                    </CardFooter>
+                </Card>
+                <Card className=''>
+                    <CardHeader>
+                        <CardTitle>Queues</CardTitle>
+                        <CardAction>
+                            <Badge>Serving</Badge>
+                        </CardAction>
+                    </CardHeader>
+                    <CardContent className='flex items-center flex-col justify-center'>
+                        <div className="aspect-square rounded-lg border bg-gradient-to-br from-primary/10 via-transparent to-primary/5 flex items-center justify-center w-fit p-4 mx-auto">
+                            <span className='text-5xl font-bold'>A001</span>
+                        </div>
+                        <span className='pt-3 text-sm text-muted-foreground'>Service</span>
+                        <span className='font-bold'>Payment</span>
+                    </CardContent>
+                    <CardFooter className='flex justify-between gap-3'>
+                        <Button className='flex-1'><Volume2 /> Recall</Button>
+                        <Button className='flex-1 bg-green-600 hover:bg-green-700 text-white'> <ConciergeBellIcon /> Serve</Button>
+                        <Button className='flex-1 bg-red-600 hover:bg-red-700 text-white'> <SkipForward /> Skip</Button>
+                    </CardFooter>
+                </Card>
             </div>
         </>
-    )
+    );
 }
