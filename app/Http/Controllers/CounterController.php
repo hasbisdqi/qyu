@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Counter;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +14,7 @@ class CounterController extends Controller
      */
     public function index()
     {
-        $counters = Counter::get();
+        $counters = Counter::with('service')->get();
         return Inertia::render('counter/page', ['counters' => $counters]);
     }
 
@@ -22,7 +23,7 @@ class CounterController extends Controller
      */
     public function create()
     {
-        return Inertia::render('counter/form');
+        return Inertia::render('counter/form', ['services' => Service::get()]);
     }
 
     /**
@@ -30,15 +31,14 @@ class CounterController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'service_id' => 'required|exists:services,id',
+            'status' => 'required',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Counter $counter)
-    {
-        //
+        Counter::create($validated);
+        return to_route('counters.index');
     }
 
     /**
@@ -46,7 +46,7 @@ class CounterController extends Controller
      */
     public function edit(Counter $counter)
     {
-        //
+        return Inertia::render('counter/form', ['counter' => $counter, 'services' => Service::get()]);
     }
 
     /**
@@ -55,12 +55,14 @@ class CounterController extends Controller
     public function update(Request $request, Counter $counter)
     {
         $validated = $request->validate([
-            'status' => 'required|in:open,closed',
+            'name' => 'string',
+            'service_id' => 'exists:services,id',
+            'status' => 'required',
         ]);
 
         $counter->update($validated);
 
-        return back()->with('success', 'Status loket diperbarui');
+        return to_route('counters.index');
     }
 
     /**
@@ -68,6 +70,7 @@ class CounterController extends Controller
      */
     public function destroy(Counter $counter)
     {
-        //
+        $counter->delete();
+        return to_route('counters.index');
     }
 }

@@ -41,3 +41,46 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Service {
+    id: number;
+    name: string;
+    code: string; // Kode singkat, contoh: "A", "B"
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Counter {
+    id: number;
+    name: string;
+    service_id: number;
+    status: 'open' | 'closed';
+    service?: Service; // Relasi opsional
+    users?: User[]; // Relasi opsional
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Queue {
+    id: number;
+    service_id: number;
+    counter_id?: number;
+    number: number; // Nomor urut
+    status: 'waiting' | 'serving' | 'done' | 'skipped';
+    called_at?: string | null;
+    finished_at?: string | null;
+    service?: Service; // Relasi opsional
+    counter?: Counter;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface CounterUser {
+    id: number;
+    counter_id: number;
+    user_id: number;
+    counter?: Counter; // Relasi opsional
+    user?: User; // Relasi opsional
+    created_at?: string;
+    updated_at?: string;
+}

@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('counters', function (Blueprint $table) {
+        Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 50);
-            $table->foreignId('service_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('status', ['open', 'closed'])->default('open');
+            $table->string('name', 100);
+            $table->string('code', 10)->unique();
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('counters');
+        Schema::dropIfExists('services');
     }
 };

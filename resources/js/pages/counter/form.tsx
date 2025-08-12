@@ -1,80 +1,92 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import AppLayout from "@/layouts/app-layout"
-import { Head } from "@inertiajs/react"
-import { BreadcrumbItem } from "@/types"
+import { Head, useForm } from "@inertiajs/react"
+import { BreadcrumbItem, Counter, Service } from "@/types"
 
-export default function NewCounterPage() {
-    //   const router = useRouter()
-    const [name, setName] = useState("")
-    const [type, setType] = useState("")
-    const [status, setStatus] = useState("open")
+type FormData = {
+    name: string
+    service_id: string
+    status: "open" | "closed"
+}
 
-    const handleSubmit = async (e: React.FormEvent) => {
+export default function NewCounterPage({ counter, services }: { counter?: Counter, services: Service[] }) {
+    const { data, setData, post, put, processing, errors } = useForm<FormData>({
+        name: counter?.name ?? "",
+        service_id: counter?.service_id?.toString() ?? "",
+        status: counter?.status ?? "open"
+    })
+
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        // // Simpan data ke backend Laravel API
-        // await fetch("/api/counters", {
-        //   method: "POST",    
-        //   body: JSON.stringify({ name, type, status }),
-        //   headers: { "Content-Type": "application/json" }
-        // })
-        // router.push("/counters")
+        if (counter) {
+            put(route("counters.update", counter.id))
+        } else {
+            post(route("counters.store"))
+        }
     }
+
     const breadcrumbs: BreadcrumbItem[] = [
-        {
-            title: 'Dashboard',
-            href: '/dashboard',
-        },
-        {
-            title: 'Counter',
-            href: '/counter',
-        },
-        {
-            title: 'Create',
-            href: '/counter/create',
-        },
-    ];
+        { title: "Dashboard", href: "/dashboard" },
+        { title: "Counter", href: "/counters" },
+        { title: counter ? "Edit" : "Create", href: counter ? `/counters/${counter.id}/edit` : "/counters/create" }
+    ]
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
+            <Head title={counter ? "Edit Counter" : "Tambah Counter"} />
+            <div className="flex flex-1 flex-col gap-4 rounded-xl p-4 overflow-x-auto">
                 <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-                    <div className="">
+                    <div>
+                        <h1 className="text-2xl font-bold">{counter ? "Edit Loket" : "Tambah Loket"}</h1>
 
-                        <h1 className="text-2xl font-bold">Tambah Loket</h1>
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {/* Nama Loket */}
                             <div>
                                 <Label htmlFor="name">Nama Loket</Label>
                                 <Input
                                     id="name"
                                     placeholder="Loket 1"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
+                                    value={data.name}
+                                    onChange={(e) => setData("name", e.target.value)}
                                     required
                                 />
+                                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                             </div>
 
+                            {/* Jenis Layanan */}
                             <div>
-                                <Label htmlFor="type">Jenis Layanan</Label>
-                                <Input
-                                    id="type"
-                                    placeholder="Customer Service / Pembayaran"
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value)}
-                                    required
-                                />
+                                <Label htmlFor="service_id">Jenis Layanan</Label>
+                                <Select
+                                    value={data.service_id}
+                                    onValueChange={(value) => setData("service_id", value)}
+                                >
+                                    <SelectTrigger id="service_id">
+                                        <SelectValue placeholder="Pilih service" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {services.map((s) => (
+                                            <SelectItem key={s.id} value={s.id.toString()}>
+                                                {s.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {errors.service_id && <p className="text-sm text-red-500">{errors.service_id}</p>}
                             </div>
 
+                            {/* Status */}
                             <div>
-                                <Label>Status</Label>
-                                <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger>
+                                <Label htmlFor="status">Status</Label>
+                                <Select
+                                    value={data.status}
+                                    onValueChange={(value: "open" | "closed") => setData("status", value)}
+                                >
+                                    <SelectTrigger id="status">
                                         <SelectValue placeholder="Pilih status" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -82,9 +94,13 @@ export default function NewCounterPage() {
                                         <SelectItem value="closed">Closed</SelectItem>
                                     </SelectContent>
                                 </Select>
+                                {errors.status && <p className="text-sm text-red-500">{errors.status}</p>}
                             </div>
 
-                            <Button type="submit">Simpan</Button>
+                            {/* Submit */}
+                            <Button type="submit" disabled={processing}>
+                                {processing ? "Menyimpan..." : "Simpan"}
+                            </Button>
                         </form>
                     </div>
                 </div>

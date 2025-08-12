@@ -5,7 +5,13 @@ use App\Models\Counter;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\CounterOperatorController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\QueueController;
 use App\Http\Controllers\QueueTicketUserController;
+use App\Http\Controllers\ServiceController;
+use App\Models\Queue;
+use App\Models\QueueTicket;
+use App\Models\Service;
 
 Route::get('/', function () {
     $counters = Counter::with(['queueTickets' => function ($q) {
@@ -18,13 +24,15 @@ Route::get('/', function () {
                 'id' => $counter->id,
                 'name' => $counter->name,
                 'type' => $counter->type,
-                'current' => $counter->queueTickets->firstWhere('status', 'serving'),
-                'waiting' => $counter->queueTickets->where('status', 'waiting')->take(5)->values(),
+                'current' => $counter->queueTickets->firstWhere('status', 'serving')
             ];
         });
+    $queue = QueueTicket::where('status', '=', 'serving')
+        ->orderBy('created_at', 'desc')->first();
 
     return Inertia::render('welcome', [
-        'counters' => $counters
+        'counters' => $counters,
+        'queue' => $queue
     ]);
 })->name('home');
 
@@ -34,15 +42,15 @@ Route::post('/queue/get', [QueueTicketUserController::class, 'store'])->name('qu
 Route::prefix('operator/{counter}')->group(function () {
     Route::get('/', [CounterOperatorController::class, 'show'])->name('operator.show');
     Route::post('/call', [CounterOperatorController::class, 'call'])->name('operator.call');
-    Route::post('/recall', [CounterOperatorController::class, 'recall'])->name('operator.recall');
     Route::post('/skip', [CounterOperatorController::class, 'skip'])->name('operator.skip');
     Route::post('/next', [CounterOperatorController::class, 'next'])->name('operator.next');
+    Route::post('/done', [CounterOperatorController::class, 'done'])->name('operator.done');
 });
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-    Route::resource('counter', CounterController::class);
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::resource('counters', CounterController::class);
+    Route::resource('services', ServiceController::class);
+    Route::resource('queues', QueueController::class);
 });
 
 require __DIR__ . '/settings.php';

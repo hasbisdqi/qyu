@@ -10,6 +10,8 @@ import {
     useReactTable,
     ColumnDef,
     SortingState,
+    ColumnFiltersState,
+    VisibilityState,
 } from "@tanstack/react-table"
 
 import {
@@ -25,80 +27,63 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { DataTablePagination } from "./data-table-pagination"
+import { DataTableViewOptions } from "./column-toggle"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
-    data: TData[]
-    searchKey?: string // kolom untuk pencarian global
+    data: TData[],
+    action?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
-    searchKey
+    action
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
-    const [globalFilter, setGlobalFilter] = React.useState("")
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+        []
+    )
+    const [columnVisibility, setColumnVisibility] =
+        React.useState<VisibilityState>({})
     const [rowSelection, setRowSelection] = React.useState({})
-
     const table = useReactTable({
         data,
         columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onSortingChange: setSorting,
+        getSortedRowModel: getSortedRowModel(),
+        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: getFilteredRowModel(),
+        onColumnVisibilityChange: setColumnVisibility,
+        onRowSelectionChange: setRowSelection,
         state: {
             sorting,
-            globalFilter,
+            columnFilters,
+            columnVisibility,
             rowSelection
         },
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
-        onRowSelectionChange: setRowSelection,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
     })
 
     return (
-        <div>
+         <div>
             <div className="flex items-center py-4">
                 <Input
-                    placeholder="Filter emails..."
-                    value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+                    placeholder="Filter names..."
+                    value={table.getColumn("name")?.getFilterValue() as string}
                     onChange={(event) =>
-                        table.getColumn("email")?.setFilterValue(event.target.value)
+                        table.getColumn("name")?.setFilterValue(event.target.value)
                     }
                     className="max-w-sm"
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            Columns
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter(
-                                (column) => column.getCanHide()
-                            )
-                            .map((column) => {
-                                return (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                )
-                            })}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <DataTableViewOptions table={table} />
+                
+                {action}
+                {/* <Link href={route('events.create')} className={buttonVariants({ size: 'sm' }) + ' ms-2'}>Add New Event</Link> */}
+
             </div>
-            <div className="overflow-hidden rounded-md border">
+            <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -126,7 +111,9 @@ export function DataTable<TData, TValue>({
                                     data-state={row.getIsSelected() && "selected"}
                                 >
                                     {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
+                                        <TableCell key={cell.id}
+                                            className="relative"
+                                        >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
@@ -142,7 +129,9 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <DataTablePagination table={table} />
+            <div className="mt-3">
+                <DataTablePagination table={table} />
+            </div>
         </div>
     )
 }

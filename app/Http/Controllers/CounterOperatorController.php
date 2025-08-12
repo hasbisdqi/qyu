@@ -27,24 +27,34 @@ class CounterOperatorController extends Controller
         ]);
     }
 
-    public function call(Counter $counter)
+    public function call(Request $request, $counterId)
     {
-        // Kalau belum ada yang serving → ambil dari waiting
-        $ticket = QueueTicket::where('type', substr($counter->type, 0, 1))
-            ->where('status', 'waiting')
-            ->orderBy('created_at', 'asc')
-            ->first();
-
-        if ($ticket) {
-            $ticket->update([
-                'status' => 'serving',
-                'counter_id' => $counter->id,
-                'called_at' => now(),
-            ]);
+        // Pastikan counter open
+        $counter = Counter::findOrFail($counterId);
+        if ($counter->status !== 'open') {
+            return response()->json(['message' => 'Counter is closed'], 400);
         }
 
-        return back();
+        // Cari queue berikutnya yang waiting sesuai tipe counter
+        $queue = QueueTicket::where('status', 'waiting')
+            // ->when($counter->type, fn($q) => $q->where('type', $counter->type))
+            ->orderBy('id') // nomor terkecil dulu
+            ->first();
+
+        if (!$queue) {
+            return response()->json(['message' => 'No waiting queue found'], 404);
+        }
+
+        // Update queue menjadi serving
+        $queue->update([
+            'status'     => 'serving',
+            'counter_id' => $counter->id,
+            'called_at'  => now(),
+        ]);
+
+        return response()->json($queue);
     }
+
 
     public function recall(Counter $counter)
     {

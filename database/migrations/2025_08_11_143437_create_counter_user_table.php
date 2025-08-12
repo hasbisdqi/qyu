@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('counters', function (Blueprint $table) {
+        Schema::create('counter_user', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 50);
-            $table->foreignId('service_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('status', ['open', 'closed'])->default('open');
+            $table->foreignId('counter_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
+            $table->unique(['counter_id', 'user_id']);
         });
     }
 
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('counters');
+        Schema::dropIfExists('counter_user');
     }
 };
