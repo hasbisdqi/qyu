@@ -10,95 +10,98 @@ use Inertia\Inertia;
 
 class CounterOperatorController extends Controller
 {
+    public function index()
+    {
+        $counters = Counter::all();
+        return Inertia::render('operator/page', [
+            'counters' => $counters
+        ]);
+    }
     public function show(Counter $counter)
     {
 
         $queues = Queue::with('service')
-            ->whereIn('status', ['waiting', 'serving'])
+            ->whereIn('status', ['waiting'])
+            ->where('service_id', $counter->service_id)
             ->orderBy('created_at')
             ->get();
+        $currentQueue = Queue::where('counter_id', $counter->id)
+            ->whereIn('status', ['called', 'serving'])
+            ->first();
 
-        return Inertia::render('Operator', [
+
+        return Inertia::render('operator/show', [
+            'counter' => $counter->load('service'),
             'queues' => $queues,
+            'currentQueue' => $currentQueue,
+            'status' => $currentQueue ? ($currentQueue->status === 'serving' ? 'serving' : 'called') : 'idle'
         ]);
-    }
-
-    public function call(Request $request, $counterId)
-    {
-        // Pastikan counter open
-        $counter = Counter::findOrFail($counterId);
-        if ($counter->status !== 'open') {
-            return response()->json(['message' => 'Counter is closed'], 400);
-        }
-
-        // Cari queue berikutnya yang waiting sesuai tipe counter
-        $queue = QueueTicket::where('status', 'waiting')
-            // ->when($counter->type, fn($q) => $q->where('type', $counter->type))
-            ->orderBy('id') // nomor terkecil dulu
-            ->first();
-
-        if (!$queue) {
-            return response()->json(['message' => 'No waiting queue found'], 404);
-        }
-
-        // Update queue menjadi serving
-        $queue->update([
-            'status'     => 'serving',
-            'counter_id' => $counter->id,
-            'called_at'  => now(),
-        ]);
-
-        return response()->json($queue);
-    }
-
-
-    public function recall(Counter $counter)
-    {
-        $ticket = QueueTicket::where('counter_id', $counter->id)
-            ->where('status', 'serving')
-            ->first();
-
-        if ($ticket) {
-            // Di sistem nyata mungkin trigger suara/pengumuman di sini
-        }
-
-        return back();
-    }
-
-    public function skip(Counter $counter)
-    {
-        $ticket = QueueTicket::where('counter_id', $counter->id)
-            ->where('status', 'serving')
-            ->first();
-
-        if ($ticket) {
-            $ticket->update(['status' => 'skipped']);
-        }
-
-        return back();
     }
 
     public function next(Counter $counter)
     {
-        // Selesaikan yang sekarang
-        QueueTicket::where('counter_id', $counter->id)
-            ->where('status', 'serving')
-            ->update(['status' => 'done', 'finished_at' => now()]);
-
-        // Panggil yang berikutnya
-        $ticket = QueueTicket::where('type', substr($counter->type, 0, 1))
-            ->where('status', 'waiting')
-            ->orderBy('created_at', 'asc')
-            ->first();
-
-        if ($ticket) {
-            $ticket->update([
-                'status' => 'serving',
-                'counter_id' => $counter->id,
-                'called_at' => now(),
-            ]);
+        if ($counter->current_queue_id) {
+            return back()->with('error', 'Masih ada queue aktif');
         }
 
-        return back();
+        $queue = Queue::where('service_id', $counter->service_id)
+            ->where('status', 'waiting')
+            ->orderBy('created_at')
+            ->first();
+
+        if (!$queue) {
+            return back()->with('error', 'Tidak ada antrian');
+        }
+
+        // dump($queue);
+        $queue->update(['status' => 'called', 'counter_id' => $counter->id]);
+        // dd($queue);
+
+        // Event/broadcast ke display
+        // event(new QueueCalled($queue, $counter));
+        return 0;
+    }
+    public function recall(Counter $counter) {}
+    public function serve(Counter $counter) {
+        $queue = Queue::where('counter_id', $counter->id)
+            ->whereIn('status', ['called'])
+            ->first();
+
+        if (!$queue) {
+            return back()->with('error', 'Tidak ada antrian yang sedang dipanggil');
+        }
+
+        $queue->update(['status' => 'serving']);
+        // Event/broadcast ke display
+        // event(new QueueServed($queue, $counter));
+        return 0;
+    }
+    public function done(Counter $counter) {
+        $queue = Queue::where('counter_id', $counter->id)
+            ->whereIn('status', ['serving'])
+            ->first();
+
+        if (!$queue) {
+            return back()->with('error', 'Tidak ada antrian yang sedang dilayani');
+        }
+
+        $queue->update(['status' => 'done']);
+        // Event/broadcast ke display
+        // event(new QueueDone($queue, $counter));
+        return 0;
+    }
+    public function skip(Counter $counter) {
+        $queue = Queue::where('counter_id', $counter->id)
+            ->whereIn('status', ['called'])
+            ->first();
+
+        if (!$queue) {
+            return back()->with('error', 'Tidak ada antrian yang sedang dipanggil');
+        }
+
+        $queue->update(['status' => 'skipped']);
+        // Event/broadcast ke display
+        // event(new QueueSkipped($queue, $counter));
+        return 0;
     }
 }

@@ -10,11 +10,9 @@ use App\Http\Controllers\QueueController;
 use App\Http\Controllers\QueueTicketUserController;
 use App\Http\Controllers\ServiceController;
 use App\Models\Queue;
-use App\Models\QueueTicket;
-use App\Models\Service;
 
 Route::get('/', function () {
-    $counters = Counter::with(['queueTickets' => function ($q) {
+    $counters = Counter::with(['queues' => function ($q) {
         $q->orderBy('created_at', 'asc');
     }])
         ->where('status', 'open')
@@ -24,10 +22,10 @@ Route::get('/', function () {
                 'id' => $counter->id,
                 'name' => $counter->name,
                 'type' => $counter->type,
-                'current' => $counter->queueTickets->firstWhere('status', 'serving')
+                'current' => $counter->queues->firstWhere('status', 'serving')
             ];
         });
-    $queue = QueueTicket::where('status', '=', 'serving')
+    $queue = Queue::where('status', '=', 'serving')
         ->orderBy('created_at', 'desc')->first();
 
     return Inertia::render('welcome', [
@@ -39,8 +37,14 @@ Route::get('/', function () {
 Route::get('/queue/get', [QueueTicketUserController::class, 'create'])->name('queue.user.create');
 Route::post('/queue/get', [QueueTicketUserController::class, 'store'])->name('queue.user.store');
 
-Route::prefix('operator/{counter}')->group(function () {
-    Route::get('/', [CounterOperatorController::class, 'show'])->name('operator.show');
+Route::prefix('operator')->group(function () {
+    Route::get('/', [CounterOperatorController::class, 'index'])->name('operator.index');
+    Route::get('/{counter}', [CounterOperatorController::class, 'show'])->name('operator.show');
+    Route::post('/{counter}/next', [CounterOperatorController::class, 'next'])->name('operator.next');
+    Route::get('/{counter}/recall', [CounterOperatorController::class, 'recall'])->name('operator.recall');
+    Route::post('/{counter}/serve', [CounterOperatorController::class, 'serve'])->name('operator.serve');
+    Route::post('/{counter}/done', [CounterOperatorController::class, 'done'])->name('operator.done');
+    Route::post('/{counter}/skip', [CounterOperatorController::class, 'skip'])->name('operator.skip');
 });
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');

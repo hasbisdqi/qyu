@@ -1,44 +1,43 @@
 "use client"
-
-import { Head, useForm } from '@inertiajs/react'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Head, router } from '@inertiajs/react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Service } from '@/types'
 import { useState } from 'react'
 
-export default function UserCreate({ types }: { types: { code: string, name: string }[] }) {
-  const { data, setData, post } = useForm({ type: '' })
-  const [loading, setLoading] = useState(false)
+export default function AddQueue({ services }: { services: Service[] }) {
+    const [processing, setProcessing] = useState(false)
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    post(route('queue.user.store'))
-  }
+    const handleClick = (service_id: string) => {
+        if (processing) return
+        setProcessing(true)
+        router.post(route('queue.user.store'), { service_id }, {
+            onFinish: () => setProcessing(false),
+            onError: (errors) => {
+                // Handle errors, e.g., show a notification or alert
+                console.error('Failed to create queue:', errors);
+            }
+        })
+    }
 
-  return (
-    <>
-      <Head title="Ambil Nomor Antrian" />
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-        <h1 className="text-2xl font-bold mb-6">Ambil Nomor Antrian</h1>
-        <form onSubmit={submit} className="space-y-4 w-full max-w-sm">
-          <Select value={data.type} onValueChange={(val) => setData('type', val)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih jenis antrian" />
-            </SelectTrigger>
-            <SelectContent>
-              {types.map((t) => (
-                <SelectItem key={t.code} value={t.code}>
-                  {t.code} - {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button type="submit" disabled={!data.type || loading}>
-            {loading ? 'Memproses...' : 'Ambil Nomor'}
-          </Button>
-        </form>
-      </div>
-    </>
-  )
+    return (
+        <>
+            <Head title="Ambil Nomor Antrian" />
+            <div className="container mx-auto mt-12">
+                <h1 className="text-2xl font-bold mb-6 text-center">Pilih Layanan</h1>
+                <div className="grid grid-cols-2 gap-4 mt-8">
+                    {services.map((service) => (
+                        <Card
+                            key={service.id}
+                            className="cursor-pointer border hover:bg-primary/5 transition"
+                            onClick={() => handleClick(String(service.id))}
+                        >
+                            <CardContent>
+                                <h2 className="font-bold text-lg text-center">{service.name}</h2>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </>
+    )
 }

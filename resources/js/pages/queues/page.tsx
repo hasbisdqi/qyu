@@ -185,6 +185,7 @@ export default function QueuePage({ queues }: { queues: Queue[] }) {
                             Add New Queue
                         </Link>
                     }
+                    searchKey="queue_number"
                 />
 
                 <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>

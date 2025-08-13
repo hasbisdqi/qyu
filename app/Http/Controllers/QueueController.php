@@ -13,7 +13,7 @@ class QueueController extends Controller
      */
     public function index()
     {
-        return Inertia::render('queues/page', ['queues'=>Queue::get()]);
+        return Inertia::render('queues/page', ['queues'=>Queue::with(['service', 'counter'])->get()]);
     }
 
     /**

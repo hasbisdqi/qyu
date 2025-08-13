@@ -32,13 +32,15 @@ import { DataTableViewOptions } from "./column-toggle"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[],
-    action?: React.ReactNode
+    action?: React.ReactNode,
+    searchKey?: string
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
-    action
+    action,
+    searchKey = "name"
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -70,10 +72,10 @@ export function DataTable<TData, TValue>({
          <div>
             <div className="flex items-center py-4">
                 <Input
-                    placeholder="Filter names..."
-                    value={table.getColumn("name")?.getFilterValue() as string}
+                    placeholder="Filter..."
+                    value={table.getColumn(searchKey)?.getFilterValue() as string}
                     onChange={(event) =>
-                        table.getColumn("name")?.setFilterValue(event.target.value)
+                        table.getColumn(searchKey)?.setFilterValue(event.target.value)
                     }
                     className="max-w-sm"
                 />

@@ -11,8 +11,9 @@ class Queue extends Model
     protected $fillable = [
         'name',
         'service_id',
-        'number',
+        'queue_number',
         'status',
+        'counter_id',
         'called_at',
         'finished_at'
     ];
@@ -20,5 +21,10 @@ class Queue extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+    public function counter()
+    {
+        return $this->belongsTo(Counter::class);
     }
 }

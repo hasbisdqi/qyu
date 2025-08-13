@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('queue_number', 10);
             $table->foreignId('service_id')->constrained()->cascadeOnDelete();
-            $table->enum('status', ['waiting', 'serving', 'done', 'skipped'])->default('waiting');
+            $table->enum('status', ['waiting', 'called', 'serving', 'done', 'skipped'])->default('waiting');
             $table->foreignId('counter_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamp('called_at')->nullable();
             $table->timestamp('finished_at')->nullable();

@@ -65,7 +65,7 @@ export interface Queue {
     id: number;
     service_id: number;
     counter_id?: number;
-    number: number; // Nomor urut
+    queue_number: number; // Nomor urut
     status: 'waiting' | 'serving' | 'done' | 'skipped';
     called_at?: string | null;
     finished_at?: string | null;
