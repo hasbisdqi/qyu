@@ -46,6 +46,8 @@ export interface Service {
     id: number;
     name: string;
     code: string; // Kode singkat, contoh: "A", "B"
+    queues?: Queue[]; // Relasi opsional
+    counters?: Counter[]; // Relasi opsional
     created_at?: string;
     updated_at?: string;
 }
@@ -57,6 +59,7 @@ export interface Counter {
     status: 'open' | 'closed';
     service?: Service; // Relasi opsional
     users?: User[]; // Relasi opsional
+    queues?: Queue[]; // Relasi opsional
     created_at?: string;
     updated_at?: string;
 }

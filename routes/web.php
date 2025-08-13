@@ -1,7 +1,6 @@
 <?php
 
 use Inertia\Inertia;
-use App\Models\Counter;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CounterController;
 use App\Http\Controllers\CounterOperatorController;
@@ -9,28 +8,26 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QueueController;
 use App\Http\Controllers\QueueTicketUserController;
 use App\Http\Controllers\ServiceController;
-use App\Models\Queue;
+use App\Models\Counter;
+use App\Models\Service;
 
 Route::get('/', function () {
-    $counters = Counter::with(['queues' => function ($q) {
-        $q->orderBy('created_at', 'asc');
-    }])
-        ->where('status', 'open')
-        ->get()
-        ->map(function ($counter) {
-            return [
-                'id' => $counter->id,
-                'name' => $counter->name,
-                'type' => $counter->type,
-                'current' => $counter->queues->firstWhere('status', 'serving')
-            ];
-        });
-    $queue = Queue::where('status', '=', 'serving')
-        ->orderBy('created_at', 'desc')->first();
+    $services = Service::with([
+        'queues' => function ($q) {
+            $q->whereIn('status', ['waiting', 'called', 'serving'])
+                ->orderBy('created_at')
+                ->limit(1);
+        },
+        'counters.queues' => function ($q) {
+            $q->whereIn('status', ['waiting', 'called', 'serving'])
+                ->orderBy('created_at')
+                ->limit(1);
+        }
+    ])->get();
+
 
     return Inertia::render('welcome', [
-        'counters' => $counters,
-        'queue' => $queue
+        'services' => $services
     ]);
 })->name('home');
 

@@ -13,4 +13,8 @@ class Service extends Model
     {
         return $this->hasMany(Queue::class);
     }
+    public function counters(): HasMany
+    {
+        return $this->hasMany(Counter::class);
+    }
 }

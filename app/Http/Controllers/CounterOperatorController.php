@@ -19,15 +19,17 @@ class CounterOperatorController extends Controller
     }
     public function show(Counter $counter)
     {
-
         $queues = Queue::with('service')
-            ->whereIn('status', ['waiting'])
             ->where('service_id', $counter->service_id)
+            ->where('status', 'waiting')
             ->orderBy('created_at')
             ->get();
+
         $currentQueue = Queue::where('counter_id', $counter->id)
+            ->where('service_id', $counter->service_id) // tambahkan ini
             ->whereIn('status', ['called', 'serving'])
             ->first();
+
 
 
         return Inertia::render('operator/show', [
@@ -54,7 +56,7 @@ class CounterOperatorController extends Controller
         }
 
         // dump($queue);
-        $queue->update(['status' => 'called', 'counter_id' => $counter->id]);
+        $queue->update(['status' => 'called', 'counter_id' => $counter->id, 'called_at' => now()]);
         // dd($queue);
 
         // Event/broadcast ke display
@@ -62,7 +64,8 @@ class CounterOperatorController extends Controller
         return 0;
     }
     public function recall(Counter $counter) {}
-    public function serve(Counter $counter) {
+    public function serve(Counter $counter)
+    {
         $queue = Queue::where('counter_id', $counter->id)
             ->whereIn('status', ['called'])
             ->first();
@@ -76,7 +79,8 @@ class CounterOperatorController extends Controller
         // event(new QueueServed($queue, $counter));
         return 0;
     }
-    public function done(Counter $counter) {
+    public function done(Counter $counter)
+    {
         $queue = Queue::where('counter_id', $counter->id)
             ->whereIn('status', ['serving'])
             ->first();
@@ -85,12 +89,13 @@ class CounterOperatorController extends Controller
             return back()->with('error', 'Tidak ada antrian yang sedang dilayani');
         }
 
-        $queue->update(['status' => 'done']);
+        $queue->update(['status' => 'done', 'finished_at' => now()]);
         // Event/broadcast ke display
         // event(new QueueDone($queue, $counter));
         return 0;
     }
-    public function skip(Counter $counter) {
+    public function skip(Counter $counter)
+    {
         $queue = Queue::where('counter_id', $counter->id)
             ->whereIn('status', ['called'])
             ->first();
