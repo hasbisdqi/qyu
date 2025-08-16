@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Queue;
 use App\Models\QueueTicket;
 use App\Models\Service;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Mike42\Escpos\PrintConnectors\FilePrintConnector;
+use Mike42\Escpos\Printer;
 
 class QueueTicketUserController extends Controller
 {
@@ -28,10 +31,10 @@ class QueueTicketUserController extends Controller
 
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'service_id' => 'required|exists:services,id',
         ]);
-
         $service = Service::findOrFail($validated['service_id']);
 
         $lastQueue = $service->queues()->latest('id')->first();
@@ -52,9 +55,21 @@ class QueueTicketUserController extends Controller
         ]);
 
         try {
-            
-        }
+            // koneksi ke printer langsung
+            $connector = new FilePrintConnector("/dev/usb/lp0");
+            $printer = new Printer($connector);
 
+            // teks yang mau dicetak
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->setTextSize(3, 3);
+            $printer->text($queue->queue_number);
+            $printer->feed(3);
+            $printer->cut();
+
+            $printer->close();
+        } catch (Exception $e) {
+            echo "❌ Print gagal: " . $e->getMessage() . "\n";
+        }
 
         return back()->with('success', 'Your queue ticket has been created successfully.');
     }
