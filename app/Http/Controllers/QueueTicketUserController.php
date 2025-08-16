@@ -34,16 +34,26 @@ class QueueTicketUserController extends Controller
 
         $service = Service::findOrFail($validated['service_id']);
 
-        // Ambil nomor terakhir
         $lastQueue = $service->queues()->latest('id')->first();
-        $lastNumber = $lastQueue ? intval(substr($lastQueue->queue_number, 1)) : 0;
+
+        if ($lastQueue) {
+            // Ambil hanya angka di akhir
+            preg_match('/\d+$/', $lastQueue->queue_number, $matches);
+            $lastNumber = $matches ? intval($matches[0]) : 0;
+        } else {
+            $lastNumber = 0;
+        }
+
         $newQueueNumber = $service->code . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-        // dd($newQueueNumber);
 
         // Simpan queue baru
         $queue = $service->queues()->create([
             'queue_number' => $newQueueNumber,
         ]);
+
+        try {
+            
+        }
 
 
         return back()->with('success', 'Your queue ticket has been created successfully.');
