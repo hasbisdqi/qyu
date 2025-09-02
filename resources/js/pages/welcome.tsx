@@ -1,20 +1,25 @@
-import { Head } from '@inertiajs/react'
+import { Head, router } from '@inertiajs/react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card'
 // import { useTheme } from "next-themes";
 import { useEffect } from 'react'
 import { useAppearance } from '@/hooks/use-appearance'
 import { Counter, Service } from '@/types';
 import { Badge } from '@/components/ui/badge';
+import { useEcho } from '@laravel/echo-react';
 
 
 export default function Display({ services }: { services: Service[] }) {
-    const { updateAppearance } = useAppearance();
     const counters = services.map(s => s.counters).flat();
-    console.log(services)
-    useEffect(() => {
-        // Paksa light mode
-        updateAppearance('light');
-    }, [updateAppearance]);
+
+    useEcho(
+        'queue',
+        "QueueUpdated",
+        (e) => {
+            console.log("Queue updated event received:", e);
+
+            router.reload({ only: ['services'] });
+        },
+    );
     return (
         <>
             <Head title="Display Antrian" />
