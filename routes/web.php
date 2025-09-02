@@ -31,8 +31,10 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('/queue/get', [QueueTicketUserController::class, 'create'])->name('queue.user.create');
-Route::post('/queue/get', [QueueTicketUserController::class, 'store'])->name('queue.user.store');
+Route::get('/queue', [QueueTicketUserController::class, 'index'])->name('queue.index');
+Route::get('/queue/create', [QueueTicketUserController::class, 'create'])->name('queue.create');
+Route::get('/queue/{queue}', [QueueTicketUserController::class, 'show'])->name('queue.show');
+Route::post('/queue', [QueueTicketUserController::class, 'store'])->name('queue.store');
 
 Route::prefix('operator')->group(function () {
     Route::get('/', [CounterOperatorController::class, 'index'])->name('operator.index');

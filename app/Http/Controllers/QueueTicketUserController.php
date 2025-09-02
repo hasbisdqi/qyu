@@ -18,7 +18,7 @@ class QueueTicketUserController extends Controller
      */
     public function index()
     {
-        //
+        return Inertia::render('Queue/UserIndex');
     }
 
     public function create()
@@ -26,6 +26,14 @@ class QueueTicketUserController extends Controller
         $services = Service::get();
         return Inertia::render('Queue/UserCreate', [
             'services' => $services
+        ]);
+    }
+
+    public function show(Queue $queue)
+    {
+        return Inertia::render('Queue/UserResult', [
+            'queue' => $queue->load('service'),
+            'shouldPrint' => session('shouldPrint', false),
         ]);
     }
 
@@ -54,23 +62,9 @@ class QueueTicketUserController extends Controller
             'queue_number' => $newQueueNumber,
         ]);
 
-        try {
-            // koneksi ke printer langsung
-            $connector = new FilePrintConnector("/dev/usb/lp0");
-            $printer = new Printer($connector);
-
-            // teks yang mau dicetak
-            $printer->setJustification(Printer::JUSTIFY_CENTER);
-            $printer->setTextSize(3, 3);
-            $printer->text($queue->queue_number);
-            $printer->feed(3);
-            $printer->cut();
-
-            $printer->close();
-        } catch (Exception $e) {
-            echo "❌ Print gagal: " . $e->getMessage() . "\n";
-        }
-
-        return back()->with('success', 'Your queue ticket has been created successfully.');
+        return redirect()
+            ->route('queue.show', $queue->id)
+            ->with('shouldPrint', true);
+        // return redirect()->route('queue.show', $queue->id);
     }
 }

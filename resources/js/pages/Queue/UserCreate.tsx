@@ -1,8 +1,11 @@
 "use client"
+
 import { Head, router } from '@inertiajs/react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Service } from '@/types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import qz from 'qz-tray'
 
 export default function AddQueue({ services }: { services: Service[] }) {
     const [processing, setProcessing] = useState(false)
@@ -10,11 +13,12 @@ export default function AddQueue({ services }: { services: Service[] }) {
     const handleClick = (service_id: string) => {
         if (processing) return
         setProcessing(true)
-        router.post(route('queue.user.store'), { service_id }, {
+
+        router.post(route('queue.store'), { service_id }, {
+            preserveState: true,
             onFinish: () => setProcessing(false),
             onError: (errors) => {
-                // Handle errors, e.g., show a notification or alert
-                console.error('Failed to create queue:', errors);
+                console.error('Failed to create queue:', errors)
             }
         })
     }
@@ -32,7 +36,9 @@ export default function AddQueue({ services }: { services: Service[] }) {
                             onClick={() => handleClick(String(service.id))}
                         >
                             <CardContent>
-                                <h2 className="font-bold text-lg text-center">{service.name}</h2>
+                                <h2 className="font-bold text-lg text-center">
+                                    {service.name}
+                                </h2>
                             </CardContent>
                         </Card>
                     ))}
