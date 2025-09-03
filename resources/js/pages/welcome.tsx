@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 // import { useTheme } from "next-themes";
 import { useEffect } from 'react'
 import { useAppearance } from '@/hooks/use-appearance'
-import { Counter, Service } from '@/types';
+import { Counter, Queue, Service } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { useEcho } from '@laravel/echo-react';
 
@@ -14,8 +14,19 @@ export default function Display({ services }: { services: Service[] }) {
     useEcho(
         'queue',
         "QueueUpdated",
-        (e) => {
-            console.log("Queue updated event received:", e);
+        ({ queue }: { queue: Queue }) => {
+            console.log("Queue updated event received:", queue);
+            console.log("DEBUG status:", queue.status);
+            if (queue.status == 'called') {
+                console.log("🔔 Memanggil nomor antrian:", queue.queue_number);
+                const synth = new SpeechSynthesisUtterance(
+                    `Nomor antrian ${queue.queue_number}, silahkan menuju ke ${queue.counter?.name}`
+                );
+                synth.lang = 'id-ID';
+
+                window.speechSynthesis.speak(synth);
+            }
+
 
             router.reload({ only: ['services'] });
         },

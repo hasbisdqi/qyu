@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Events\QueueUpdated;
 use App\Models\Queue;
+use Illuminate\Support\Facades\Log;
 
 class QueueObserver
 {
@@ -20,7 +21,7 @@ class QueueObserver
      */
     public function updated(Queue $queue): void
     {
-        event(new QueueUpdated());
+        event(new QueueUpdated($queue->load('counter')));
     }
 
     /**
